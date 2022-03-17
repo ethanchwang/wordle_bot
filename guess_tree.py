@@ -1,5 +1,6 @@
 import string
 import pickle
+import time
 
 letters = list(string.ascii_lowercase)
 empty_dictionary_string = '{}'
@@ -10,10 +11,8 @@ def load_in_pickle(data):
 
 def remove_dict_of_words_from_remaining(from_dict,target_dict):
     for key in from_dict:
-        try:
+        if key in target_dict:
             del target_dict[f'{key}']
-        except KeyError:
-            pass
     return target_dict
 
 for letter in letters:
@@ -21,7 +20,7 @@ for letter in letters:
         exec(f"""{letter}{number} = load_in_pickle('{letter}{number}')""")
 
 def save_as_pickle(data,data_as_string):
-    with open(f'pickled_dictionaries/{data_as_string}.pkl', 'wb') as f:
+    with open(f'cached_dict/{data_as_string}.pkl', 'wb') as f:
         pickle.dump(data, f)
 
 all_wordle_words_dict = load_in_pickle('all_wordle_words_dict')
@@ -61,6 +60,7 @@ class new_branch:
     
     def get_max_for_all_feedback(self):
         all_possibilities_after_feedback = []
+        start_time = time.time()
         for place_1 in range(0,3):
             for place_2 in range(0,3):
                 for place_3 in range(0,3):
@@ -71,6 +71,8 @@ class new_branch:
                             feedback = new_feedback(self.word,feedback_this_branch,self.remaining_wordle_words_branch)
                             all_possibilities_after_feedback.append(feedback.get_number_of_remaining_words())
                             # print(all_possibilities_after_feedback)
+        end_time = time.time()
+        print(f'for 1 word: time = {end_time-start_time}s')
         max_for_this_word = max(all_possibilities_after_feedback)
         # print(all_possibilities_after_feedback)
         # print(max_for_this_word)
