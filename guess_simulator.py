@@ -20,16 +20,18 @@ for letter in letters:
     for number in range(0,5):
         exec(f"""{letter}{number} = load_in_pickle('{letter}{number}')""")
 
+master_all_wordle_words_list = load_in_pickle('all_wordle_words_list')
+master_all_wordle_words_dict = load_in_pickle('all_wordle_words_dict')
+
 class game_simulator:
 
     def __init__(self):
         #load in pickled dictionaries
-        self.all_wordle_words_list = load_in_pickle('all_wordle_words_list')
-        self.all_wordle_words_dict = load_in_pickle('all_wordle_words_dict')
+        self.all_wordle_words_dict = master_all_wordle_words_dict.copy()
         self.remaining_possible_wordle_words = self.all_wordle_words_dict
         self.how_many_guesses_so_far = 0
         self.guess = ''
-        self.correct_word = self.all_wordle_words_list[random.randint(0,len(self.all_wordle_words_list)-1)]
+        self.correct_word = master_all_wordle_words_list[random.randint(0,len(master_all_wordle_words_list)-1)]
         print(f'correct word: {self.correct_word}')
         self.word_found = False
 
@@ -64,19 +66,19 @@ class game_simulator:
             if result == '0':
                 #remove letter from all places
                 for number in range(0,5):
-                    exec(f'remove_dict_of_words_from_remaining({self.guess[index]}{number},game.remaining_possible_wordle_words)')
+                    exec(f'remove_dict_of_words_from_remaining({self.guess[index]}{number},self.remaining_possible_wordle_words)')
                     # print(f'removed: {game.guess[index]}{number}')
             if result == '2':
                 for letter in letters:
                     if letter != self.guess[index]:
-                        exec(f'remove_dict_of_words_from_remaining({letter}{index},game.remaining_possible_wordle_words)')
+                        exec(f'remove_dict_of_words_from_remaining({letter}{index},self.remaining_possible_wordle_words)')
                         # print(f'removed: {letter}{index}')
             if result == '1':
-                exec(f'remove_dict_of_words_from_remaining({self.guess[index]}{index},game.remaining_possible_wordle_words)')
+                exec(f'remove_dict_of_words_from_remaining({self.guess[index]}{index},self.remaining_possible_wordle_words)')
                 # print(f'removed: {game.guess[index]}{index}')
 
 total_guesses = 0
-n = 100
+n = 1000
 
 for _ in range(0,n):
     g = game_simulator();

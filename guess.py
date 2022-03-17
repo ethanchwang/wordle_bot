@@ -5,54 +5,67 @@ letters = list(string.ascii_lowercase)
 empty_dictionary_string = '{}'
 
 def load_in_pickle(data):
-    with open(f'pickled_dictionaries/{data}.pkl', 'rb') as f:
-        return pickle.load(f)
+        with open(f'pickled_dictionaries/{data}.pkl', 'rb') as f:
+            return pickle.load(f)
 
-def remove_dict_of_words_from_remaining(from_dict):
-    global remaining_possible_wordle_words
-    for word in from_dict:
-        try:
-            del remaining_possible_wordle_words[f'{word}']
-        except KeyError:
-            pass
+def remove_dict_of_words_from_remaining(from_dict,target_dict):
+        for word in from_dict:
+            try:
+                del target_dict[f'{word}']
+            except KeyError:
+                pass
 
-#load in pickled dictionaries
-all_wordle_words_list = load_in_pickle('all_wordle_words_list')
-all_wordle_words_dict = load_in_pickle('all_wordle_words_dict')
-remaining_possible_wordle_words = all_wordle_words_dict
 for letter in letters:
     for number in range(0,5):
         exec(f"""{letter}{number} = load_in_pickle('{letter}{number}')""")
 
-#guess
-how_many_guesses_so_far = 0
-while True:
-    guess = [*remaining_possible_wordle_words.keys()][-1]
-    how_many_guesses_so_far += 1
-    print(f'guess #{how_many_guesses_so_far}: {guess}! 0=grey,1=yellow,2=green')
-    feedback = input()
+class guesser:
 
-    #check if word found
-    if feedback == "11111":
-        print(f"yay! the word was: {guess}! found in {how_many_guesses_so_far} guesses!")
-        break
+    def __init__(self):
+        #load in pickled dictionaries
+        self.all_wordle_words_list = load_in_pickle('all_wordle_words_list')
+        self.all_wordle_words_dict = load_in_pickle('all_wordle_words_dict')
+        self.remaining_possible_wordle_words = self.all_wordle_words_dict
+        self.how_many_guesses_so_far = 0
+        self.guess = ''
+        self.word_found = False
 
-    for index in range(0,len(feedback)):
-        result = feedback[index]
-        if result == '0':
-            #remove letter from all places
-            for number in range(0,5):
-                exec(f'remove_dict_of_words_from_remaining({guess[index]}{number})')
-                print(f'removed: {guess[index]}{number}')
-        if result == '2':
-            # for number in range(0,5):
-            #     if number != index:
-            #         exec(f'remove_dict_of_words_from_remaining({guess[index]}{number})')
-            #         print(f'removed: {guess[index]}{number}')
-            for letter in letters:
-                if letter != guess[index]:
-                    exec(f'remove_dict_of_words_from_remaining({letter}{index})')
-                    print(f'removed: {letter}{index}')
-        if result == '1':
-            exec(f'remove_dict_of_words_from_remaining({guess[index]}{index})')
-            print(f'removed: {guess[index]}{index}')
+    #guess
+    def generate_guess(self):
+        self.guess = [*self.remaining_possible_wordle_words.keys()][-1]
+        self.how_many_guesses_so_far += 1
+        print(f'guess #{self.how_many_guesses_so_far}: {self.guess}!')
+    
+    def manually_get_feedback(self):
+        print("0=grey,1=yellow,2=green")
+        feedback = input()
+        return feedback
+
+
+    def modify_based_on_feedback(self,feedback):
+        #check if word found
+        if feedback == "22222":
+            print(f"yay! the word was: {self.guess}! found in {self.how_many_guesses_so_far} guesses!")
+            self.word_found = True
+            return
+
+        for index in range(0,len(feedback)):
+            result = feedback[index]
+            if result == '0':
+                #remove letter from all places
+                for number in range(0,5):
+                    exec(f'remove_dict_of_words_from_remaining({self.guess[index]}{number},self.remaining_possible_wordle_words)')
+                    # print(f'removed: {game.guess[index]}{number}')
+            if result == '2':
+                for letter in letters:
+                    if letter != self.guess[index]:
+                        exec(f'remove_dict_of_words_from_remaining({letter}{index},self.remaining_possible_wordle_words)')
+                        # print(f'removed: {letter}{index}')
+            if result == '1':
+                exec(f'remove_dict_of_words_from_remaining({self.guess[index]}{index},self.remaining_possible_wordle_words)')
+                # print(f'removed: {game.guess[index]}{index}')
+
+g = guesser();
+while not g.word_found:
+    g.generate_guess()
+    g.modify_based_on_feedback(g.manually_get_feedback())
