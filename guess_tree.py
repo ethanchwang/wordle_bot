@@ -20,6 +20,10 @@ for letter in letters:
     for number in range(0,5):
         exec(f"""{letter}{number} = load_in_pickle('{letter}{number}')""")
 
+def save_as_pickle(data,data_as_string):
+    with open(f'pickled_dictionaries/{data_as_string}.pkl', 'wb') as f:
+        pickle.dump(data, f)
+
 all_wordle_words_dict = load_in_pickle('all_wordle_words_dict')
 
 class new_feedback:
@@ -122,9 +126,11 @@ class guesser:
         return self.feedback
 
 print('guess #1: sauce!')
+g = guesser();
 
 while True:
-    g = guesser();
     g.modify_dict_of_remaining_words(g.manually_get_feedback())
     g.update_branch()
     g.generate_guess()
+    print(g.branches_all_wordle_words_dict)
+    save_as_pickle(g.branches_all_wordle_words_dict,f'{g.guess}{g.feedback}')
