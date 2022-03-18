@@ -15,6 +15,9 @@ def remove_dict_of_words_from_remaining(from_dict,target_dict):
             del target_dict[f'{key}']
     return target_dict
 
+def get_intersection_between_two_dict(from_dict,target_dict):
+    return len(from_dict.keys() & target_dict.keys())
+
 for letter in letters:
     for number in range(0,5):
         exec(f"""{letter}{number} = load_in_pickle('{letter}{number}')""")
@@ -30,27 +33,29 @@ class new_feedback:
         self.word = input_word
         self.feedback = input_feedback
         # print(self.feedback)
-        self.remaining_wordle_words = input_remaining_wordle_words.copy()
+        self.remaining_wordle_words = input_remaining_wordle_words
+        self.running_dict = {}
         # print(f'before trim: {len(self.remaining_wordle_words)}')
 
     def trim_eliminated_words(self):
+        self.running_dict.clear()
         for index in range(0,len(self.feedback)):
             letter_result = self.feedback[index]
             if letter_result == '0':
                 for number in range(0,5):
-                    exec(f'self.remaining_wordle_words = remove_dict_of_words_from_remaining({self.word[index]}{number},self.remaining_wordle_words)')
+                    exec(f'self.running_dict.update({self.word[index]}{number})')
             if letter_result == '2':
                 for letter in letters:
                     if letter != self.word[index]:
-                        exec(f'self.remaining_wordle_words = remove_dict_of_words_from_remaining({letter}{index},self.remaining_wordle_words)')
+                        exec(f'self.running_dict.update({letter}{index})')
 
             if letter_result == '1':
-                exec(f'self.remaining_wordle_words = remove_dict_of_words_from_remaining({self.word[index]}{index},self.remaining_wordle_words)')
+                exec(f'self.running_dict.update({self.word[index]}{index})')
+        return get_intersection_between_two_dict(self.running_dict,self.remaining_wordle_words)
 
     def get_number_of_remaining_words(self):
-        self.trim_eliminated_words()
         # print(f'after trim: {len(self.remaining_wordle_words)}')
-        return len(self.remaining_wordle_words)
+        return self.trim_eliminated_words()
 
 class new_branch:
     def __init__(self,input_word,input_remaining_wordle_words):
@@ -60,7 +65,7 @@ class new_branch:
     
     def get_max_for_all_feedback(self):
         all_possibilities_after_feedback = []
-        start_time = time.time()
+        # start_time = time.time()
         for place_1 in range(0,3):
             for place_2 in range(0,3):
                 for place_3 in range(0,3):
@@ -71,9 +76,9 @@ class new_branch:
                             feedback = new_feedback(self.word,feedback_this_branch,self.remaining_wordle_words_branch)
                             all_possibilities_after_feedback.append(feedback.get_number_of_remaining_words())
                             # print(all_possibilities_after_feedback)
-        end_time = time.time()
-        print(f'for 1 word: time = {end_time-start_time}s')
-        max_for_this_word = max(all_possibilities_after_feedback)
+        # end_time = time.time()
+        # print(f'for 1 word: time = {end_time-start_time}s')
+        max_for_this_word = min(all_possibilities_after_feedback)
         # print(all_possibilities_after_feedback)
         # print(max_for_this_word)
         return max_for_this_word
@@ -87,7 +92,8 @@ class guesser:
         self.guess = 'sauce'
         self.feedback = ''
         self.word_found = False
-    
+        self.removed_dicts = []
+        
     def modify_dict_of_remaining_words(self,feedback):
         for index in range(0,len(feedback)):
             result = feedback[index]
@@ -100,6 +106,26 @@ class guesser:
                         exec(f'self.remaining_possible_wordle_words = remove_dict_of_words_from_remaining({letter}{index},self.remaining_possible_wordle_words)')
             if result == '1':
                 exec(f'self.remaining_possible_wordle_words = remove_dict_of_words_from_remaining({self.guess[index]}{index},self.remaining_possible_wordle_words)')
+        # if len(self.remaining_possible_wordle_words) == 2:
+        #     self.guess = list(self.remaining_possible_wordle_words.keys())[0]
+        #     self.how_many_guesses_so_far += 1
+        #     print(f'guess #{self.how_many_guesses_so_far}: {self.guess}!')
+        #     if self.manually_get_feedback() == '22222':
+        #         self.modify_dict_of_remaining_words(self.feedback)
+        #         self.word_found = True
+        #         self.guess = list(self.remaining_possible_wordle_words.keys())[0]
+        #         print(f'word found! word: {self.guess}')
+        #     else:
+        #         self.modify_dict_of_remaining_words(self.feedback)
+        #         self.how_many_guesses_so_far += 1
+        #         self.guess = list(self.remaining_possible_wordle_words.keys())[0]
+        #         print(f'guess #{self.how_many_guesses_so_far}: {self.guess}!')
+        #         self.word_found = True
+        if len(self.remaining_possible_wordle_words) == 1:
+            self.word_found = True
+            self.how_many_guesses_so_far += 1
+            self.guess = list(self.remaining_possible_wordle_words.keys())[0]
+            print(f'word found! word: {self.guess}')
 
     def update_branch(self):
         index = 0
@@ -118,7 +144,9 @@ class guesser:
     
     def generate_guess(self):
         self.rearrange_all_wordle_words_dict()
-        self.guess = next(iter(self.branches_all_wordle_words_dict))
+        print(self.branches_all_wordle_words_dict)
+        print(self.remaining_possible_wordle_words)
+        self.guess = list(self.branches_all_wordle_words_dict.keys())[-1]
         self.how_many_guesses_so_far += 1
         print(f'guess #{self.how_many_guesses_so_far}: {self.guess}!')
     
@@ -130,9 +158,11 @@ class guesser:
 print('guess #1: sauce!')
 g = guesser();
 
-while True:
+while not g.word_found:
     g.modify_dict_of_remaining_words(g.manually_get_feedback())
+    if g.word_found == True:
+        print(f'word found in {g.how_many_guesses_so_far} guesses!')
+        break
     g.update_branch()
     g.generate_guess()
-    print(g.branches_all_wordle_words_dict)
     save_as_pickle(g.branches_all_wordle_words_dict,f'{g.guess}{g.feedback}')

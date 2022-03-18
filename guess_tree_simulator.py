@@ -7,6 +7,9 @@ import random
 letters = list(string.ascii_lowercase)
 empty_dictionary_string = '{}'
 
+path1 = 'day2/results.txt'
+path2 = 'day2/results_with_dict.txt'
+
 def load_in_pickle(data):
     with open(f'pickled_dictionaries/{data}.pkl', 'rb') as f:
         return pickle.load(f)
@@ -29,13 +32,13 @@ def save_as_pickle(data,data_as_string):
         pickle.dump(data, f)
 
 def write_to_txt(line):
-    with open('results.txt', 'a') as f:
+    with open(path1, 'a') as f:
         try:
             f.write(line)
             f.write('\n')
         except:
             pass
-    with open('results_with_dict.txt', 'a') as f:
+    with open(path2, 'a') as f:
         f.write(str(line))
         f.write('\n')
 
@@ -123,8 +126,9 @@ class guesser:
                 exec(f'self.remaining_possible_wordle_words = remove_dict_of_words_from_remaining({self.guess[index]}{index},self.remaining_possible_wordle_words)')
         if len(self.remaining_possible_wordle_words) == 1:
             self.word_found = True
-            print(f'word found! word: {self.guess}')
-            write_to_txt(f'word found! word: {self.guess}')
+            self.how_many_guesses_so_far += 1
+            self.guess = list(self.remaining_possible_wordle_words.keys())[0]
+            # print(f'word found! word: {self.guess}')
 
     def update_branch(self):
         index = 0
@@ -150,6 +154,10 @@ class guesser:
         print(f'# of remaining words: {len(self.remaining_possible_wordle_words)}!')
         write_to_txt(f'# of remaining words: {len(self.remaining_possible_wordle_words)}!')
         self.guess = list(self.branches_all_wordle_words_dict.keys())[-1]
+        best_outcome = list(self.branches_all_wordle_words_dict.values())[-1]
+        for word in list(self.remaining_possible_wordle_words):
+            if self.branches_all_wordle_words_dict[word] == best_outcome:
+                self.guess = word
         self.how_many_guesses_so_far += 1
         print(f'guess #{self.how_many_guesses_so_far}: {self.guess}!')
         write_to_txt(f'guess #{self.how_many_guesses_so_far}: {self.guess}!')
@@ -181,21 +189,23 @@ for number_of_simulated_games_so_far in range(1,n+1):
     write_to_txt('guess #1: sauce!')
     while (not g.word_found) and g.how_many_guesses_so_far < 11:
         g.modify_dict_of_remaining_words(g.automatically_get_feedback())
-        if g.word_found == True:
+        if g.word_found:
             total_guesses += g.how_many_guesses_so_far
+            print(f'word found! word: {g.guess}')
+            write_to_txt(f'word found! word: {g.guess}')
             print(f'word found in {g.how_many_guesses_so_far} guesses!')
             write_to_txt(f'word found in {g.how_many_guesses_so_far} guesses!')
             print(f'average accuracy so far: {total_guesses/number_of_simulated_games_so_far}')
             write_to_txt(f'average accuracy so far: {total_guesses/number_of_simulated_games_so_far}')
             print(f'number of games simulated so far: {number_of_simulated_games_so_far}!')
             write_to_txt(f'number of games simulated so far: {number_of_simulated_games_so_far}!')
-            with open('results.txt', 'a') as f:
+            with open(path1, 'a') as f:
                 f.write('\n')
-            with open('results_with_dict.txt', 'a') as f:
+            with open(path2, 'a') as f:
                 f.write('\n')
-            continue
-        g.update_branch()
-        g.generate_guess()
+        if not g.word_found:
+            g.update_branch()
+            g.generate_guess()
         if g.how_many_guesses_so_far > 9:
             print(f'{g.correct_word} took 10 guesses! abort!')
             write_to_txt(f'{g.correct_word} took 10 guesses! abort!')
